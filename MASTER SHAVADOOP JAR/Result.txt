@@ -1,0 +1,1 @@
+{car=3, beer=2, river=2, deer=2}
