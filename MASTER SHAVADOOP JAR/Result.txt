@@ -1,1 +1,1 @@
-{car=3, beer=2, river=2, deer=2}
+{qui=2, démembrer=1, préliminaire=2, livre=2, des=2, ou=4, forestière=2, partie=2, gestion=4, publiques=2, l'engagement=4, est=2, forestiers=4, accordé=2, l021=2, communes=4, aides=2, matières=1, dispositions=4, de=2, et=2, aux=2, bénéfice=2}

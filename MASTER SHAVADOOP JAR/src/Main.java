@@ -1,12 +1,19 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Hashtable;
@@ -19,11 +26,11 @@ import java.util.TreeMap;
 
 public class Main {
 
-	public static void main(String args[]) throws InterruptedException, FileNotFoundException {
+	public static void main(String args[]) throws InterruptedException, IOException {
 
 
 		String path = "/cal/homes/ebenoit/workspace/MASTER SHAVADOOP JAR/";
-		String fileToWordCount = "Input.txt";
+		String fileToWordCount = "forestier_mayotte.txt";
 		String fileWithPotentialMachines = "addresses.txt";
 		
 		
@@ -31,6 +38,7 @@ public class Main {
 		DecimalFormat df3 = new DecimalFormat("000");
 		
 
+		long startTimeT = System.currentTimeMillis();
 		
 	///////////////////////////////////////
 	// Analyse des machines disponibles ///
@@ -95,10 +103,45 @@ public class Main {
     	
     	// Filter
     	long startTimeF = System.currentTimeMillis();
-    	Path fileInputNotCleaned = Paths.get(path + fileToWordCount);
+    	//Path fileInputNotCleaned = Paths.get(path + fileToWordCount);
     	
-    	
-    	
+    	File inputFile = new File(path + fileToWordCount);
+    	File tempFile = new File(path + "inputCleaned.txt");
+
+    	BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+    	BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+    	String lineToRemove = "";
+    	List<String> itemToRemove = Arrays.asList("", "↬", "-", ":", "'", "@", "le", "la", "l'", "les", "on", "il", "elle", "de", "des", "que", "ou", "leur", "et", "qui");
+    	String currentLine;
+
+    	while((currentLine = reader.readLine()) != null) {
+    		
+    	    // trim newline when comparing with lineToRemove
+    		String trimmedLine = currentLine.trim();
+    		if(trimmedLine.equals(lineToRemove)) continue;
+    		
+    	    // clean trimmedLine when comparing items from trimmedLine to badItems from charToRemove
+    	    String[] splitTrimmedLine = trimmedLine.toLowerCase().split(" ");
+    	    final List<String> cleanedSplitTrimmedLine =  new ArrayList<String>();
+    	    Collections.addAll(cleanedSplitTrimmedLine, splitTrimmedLine); 
+    	    for (String badItem : itemToRemove){
+    	    	cleanedSplitTrimmedLine.remove(badItem);
+    	    }
+    	    splitTrimmedLine = cleanedSplitTrimmedLine.toArray(new String[cleanedSplitTrimmedLine.size()]);
+    	    String cleanedLine = "";
+    	    for (String item : splitTrimmedLine){
+    	    	cleanedLine = cleanedLine + " " + item.replace(".", "");
+    	    }
+    	    cleanedLine.trim();
+    	    // Write cleanedLine in the cleaned input file
+    	    writer.write(cleanedLine + System.getProperty("line.separator"));    
+    	}
+    	writer.close(); 
+    	reader.close(); 
+    	//boolean successful = tempFile.renameTo(inputFile);
+
+    	long endTimeF = System.currentTimeMillis();
     	
     	
     	
@@ -108,7 +151,7 @@ public class Main {
     	
 		// Input hash into line blocks - Dictionary SPLIT Sx
 		// Lire et afficher le fichier INPUT et créer les fichier Sx
-        Path fileInputCleaned = Paths.get(path + fileToWordCount);
+        Path fileInputCleaned = Paths.get(path + "inputCleaned.txt");
         Hashtable<String, Integer> S = new Hashtable<String, Integer>();
         int Sx_Lim = 0;
         
@@ -120,18 +163,18 @@ public class Main {
             
             // Crée un fichier par line
             for (int j = 0; j < listOfLines.size(); j += 1){
-            	if (listOfLines.get(j).trim() != null){
+            	if (listOfLines.get(j) != null){
 	                String Sx = "S" + j + ".txt";
 	                S.put(Sx, j);
 	                Sx_Lim ++;
 	            	try (PrintWriter out = new PrintWriter(path + Sx);){ 
-                    	out.println(listOfLines.get(j).toLowerCase());
+                    	out.println(listOfLines.get(j));
 	                    out.close();
 	                } catch (IOException e) {
 	                        e.printStackTrace();
 	                }
             	} else{	
-                	continue;
+                	j++;
                 }
             }
         	} catch (IOException e1) {
@@ -157,19 +200,15 @@ public class Main {
 		long startTimeM = System.currentTimeMillis();
         
     	// Launcher of jobs on machines among connection OK
-		String machine = null;
+		String machineM = null;
 		int i = 0;
 		ArrayList<slaveManager> List_slaves = new ArrayList<slaveManager>();
 		
-		
-		
-		
-					
-		
+
 		while (i < Sx_Lim) {
 			// Gestion du nb de jobs à lancer vs nb de machines disponibles
-			int j = i %  liste_machines_ok.size();
-			String machineM = liste_machines_ok.get(j);
+			int j = i  %  liste_machines_ok.size();
+			machineM = liste_machines_ok.get(j);
 			
 			// Build dictionary UMx - machine
 			String UMx = "UM" + i;
@@ -181,7 +220,7 @@ public class Main {
 				slave.start();
 				List_slaves.add(slave);
 	        }
-	        i += 1;
+	        i++;
 		}
 		
 	    
@@ -308,6 +347,7 @@ public class Main {
 		    ArrayList<String> jobDone = slave.getSlaveAnswer();  
 		    
 			for (String res : jobDone){
+				if (res == null) continue;
 				String mach = slave.getMachine();
 				String retrievedKey = new String();
 				Set<String> RMmach_keys = RMmach.keySet(); 
@@ -331,7 +371,7 @@ public class Main {
 		
 		
 		
-		/*
+		
 		// Sort results by counts
 		//public static void sortValue(Hashtable<?, Integer> t) {
 			ArrayList<Map.Entry<?, Integer>> sortedCounts = new ArrayList<Entry<?, Integer>>(RMcount.entrySet());
@@ -343,7 +383,7 @@ public class Main {
 
         System.out.println(sortedCounts);
 		//}
-		*/
+		
 		
 		// Print result in a final file
 		try (PrintWriter outputTowardsResult = new PrintWriter(path + "Result.txt");){
@@ -356,12 +396,16 @@ public class Main {
 		// SMx -> slave va lire les fichiers umx d'entrée et affiche ligne par ligne les occurences de ce mot dans SMx.txt
 		// RMx va lire SMx et compte occurence du mot et renvoie au master le nb final dans un ArrayList<String>
 	
+		long endTimeT = System.currentTimeMillis();
 		
 		// Timing 
 		System.out.println("\nTotal execution time Preprocessing: " + df0.format((endTimeP - startTimeP) / 1000) + " s " + df3.format((endTimeP - startTimeP) % 1000) + " ms");
+		System.out.println("Total execution time Filtering: " + df0.format((endTimeF - startTimeF) / 1000) + " s " + df3.format((endTimeF - startTimeF) % 1000) + " ms");
 		System.out.println("Total execution time Splitting: " + df0.format((endTimeS - startTimeS) / 1000) + " s " + df3.format((endTimeS - startTimeS) % 1000) + " ms");
 		System.out.println("Total execution time Mapping: " + df0.format((endTimeM - startTimeM) / 1000) + " s " + df3.format((endTimeM - startTimeM) % 1000) + " ms");
 		System.out.println("Total execution time Shuffling: " + df0.format((endTimeSh - startTimeSh) / 1000) + " s " + df3.format((endTimeSh - startTimeSh) % 1000) + " ms");
 		System.out.println("Total execution time Reducing: " + df0.format((endTimeR - startTimeR) / 1000) + " s " + df3.format((endTimeR - startTimeR) % 1000) + " ms");
+		System.out.println("Total execution time TOTAL: " + df0.format((endTimeT - startTimeT) / 1000) + " s " + df3.format((endTimeT - startTimeT) % 1000) + " ms");
+
 	}
 }
