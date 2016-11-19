@@ -41,27 +41,21 @@ public class MainSlave {
 			    		.toString()
 			    		.toLowerCase()
 			    		.replace("[", "").replace("]", "")
+			    		.trim()
 			    		.split(" ");
 
 			    // Crée un fichier UMx.txt par fichier d'entrée Sx.txt et construit le dictionnaire UMx - machine
-			    int i = Integer.parseInt(args[2].substring(1,2)); // regex marche pas r'S(\d).txt' 
-			    String UMx = "UM" + i + ".txt"; // "-" + args[1] + 
+			    int i = Integer.parseInt(args[2].replace("S", "").replace(".txt", ""));
+			    String UMx = "UM" + i + ".txt"; 
 			    
 			    // Crée un fichier UMx-machine.txt contenant le résultat du map split
 		    	try (PrintWriter outputTowardsUMx = new PrintWriter(path + UMx);){
 		    		int j =0;
-		    		//int k = 0;
 		    		// Build UMx files
 					while (j  < listOfWords.length){
-						outputTowardsUMx.println(listOfWords[j]); // + " " + 1
+						outputTowardsUMx.println(listOfWords[j]);
 			            // Print UMx distinct list of words
 		            	System.out.println(listOfWords[j]);
-			            /*while(k < j){
-				            if (!(listOfWords.toString().substring(0,j).contains(listOfWords[j]))){
-				            	System.out.println(listOfWords[j]);
-				            	k++;
-				            }
-			            }*/
 			            j++;
 			        } 
 					outputTowardsUMx.close();
