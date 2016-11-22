@@ -1,0 +1,2 @@
+[biens=8, forestier=6, code=5, partie=5, forestiers=4, communes=4, agroforestière=4, agroforestiers=4, souscrivent=4, mayotte=4, titre=2, prioritairement=2, fait=2, garanties=2, démembrer=2, préliminaire=2, bonne=2, constitue=2, unité=2, livre=2, présentant=2, régis=2, article=2, forestière=2, accordé=2, propriété=2, table=2, attachées=2, engagement=2, bénéfice=2, sommaire=1, plan=1, législative=1, propriétaires=1]
+[]

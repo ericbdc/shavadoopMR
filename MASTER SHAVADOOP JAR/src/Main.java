@@ -1,12 +1,10 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,8 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+
 
 public class Main {
 
@@ -30,9 +27,9 @@ public class Main {
 
 
 		String path = "/cal/homes/ebenoit/workspace/MASTER SHAVADOOP JAR/";
-		String fileToWordCount = "forestier_mayotte.txt";
+		String fileToWordCount = "domaine_public_fluvial.txt"; // "forestier_mayotte.txt"  "deontologie_police_nationale.txt" "domaine_public_fluvial.txt"
 		String fileWithPotentialMachines = "addresses.txt";
-		
+		String Result = "RESULT_domaine_public_fluvial.txt"; // "RESULT_forestier_mayotte.txt" "RESULT_deontologie_police_nationale.txt" "RESULT_domaine_public_fluvial.txt"
 		
 		DecimalFormat df0 = new DecimalFormat("00");
 		DecimalFormat df3 = new DecimalFormat("000");
@@ -98,10 +95,11 @@ public class Main {
    
 		
     ///////////////////////////////////////
-    ///////////// Dictionaries ////////////
+    ///////////// Jobs ////////////////////
     ///////////////////////////////////////
     	
-    	// Filter
+    	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    	// FILTERING / CLEANING
     	long startTimeF = System.currentTimeMillis();
     	//Path fileInputNotCleaned = Paths.get(path + fileToWordCount);
     	
@@ -112,26 +110,34 @@ public class Main {
     	BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 
     	String lineToRemove = "";
-    	List<String> itemToRemove = Arrays.asList("", "↬", "-", ":", "'", "@", "le", "la", "l'", "les", "on", "il", "elle", "de", "des", "que", "ou", "leur", "et", "qui");
+    	List<String> itemToRemove = Arrays.asList("", " ", "↬", "-", "'", "@", "le", "la", "les", "on", "il", "elle", "de", 
+    			"des", "que", "ou", "leur", "et", "qui", "tous", "toutes", "ne", "ni", "dont", "aux", "au", "a", "à", "l",
+    			"pour", "se", "ce", "ses", "ces", "une", "un", "lui", "en", "dans", "leur", "eux", "tel", "par", "ils",
+    			"sa", "si", "toute", "sur", "i", "ii", "iii", "iv", "v", "pas", "par", "ier", "son", "est", "du", "sans", "sont", "sous");
     	String currentLine;
 
     	while((currentLine = reader.readLine()) != null) {
     		
     	    // trim newline when comparing with lineToRemove
-    		String trimmedLine = currentLine.trim();
+    		String trimmedLine = currentLine
+    				.trim()
+    				.replace(".", "").replace(",", "").replace(":",  "").replace("l'", "").replace(";", "")
+	    			.replace("s'",  "").replace("n'",  "").replace("qu'",  "").replace("d'",  "")
+	    			.replaceAll("\\d+","");
     		if(trimmedLine.equals(lineToRemove)) continue;
     		
     	    // clean trimmedLine when comparing items from trimmedLine to badItems from charToRemove
     	    String[] splitTrimmedLine = trimmedLine.toLowerCase().split(" ");
     	    final List<String> cleanedSplitTrimmedLine =  new ArrayList<String>();
-    	    Collections.addAll(cleanedSplitTrimmedLine, splitTrimmedLine); 
-    	    for (String badItem : itemToRemove){
-    	    	cleanedSplitTrimmedLine.remove(badItem);
-    	    }
-    	    splitTrimmedLine = cleanedSplitTrimmedLine.toArray(new String[cleanedSplitTrimmedLine.size()]);
+    	    for (String item : splitTrimmedLine){ 
+    	    	if (itemToRemove.contains(item)) continue;
+    	    	cleanedSplitTrimmedLine.add(item);
+	    	}
+    	    // delete punctuation
+    	    // splitTrimmedLine = cleanedSplitTrimmedLine.toArray(new String[cleanedSplitTrimmedLine.size()]);
     	    String cleanedLine = "";
-    	    for (String item : splitTrimmedLine){
-    	    	cleanedLine = cleanedLine + " " + item.replace(".", "");
+    	    for (String item : cleanedSplitTrimmedLine){
+    	    	cleanedLine = cleanedLine + " " + item;
     	    }
     	    cleanedLine.trim();
     	    // Write cleanedLine in the cleaned input file
@@ -145,8 +151,8 @@ public class Main {
     	
     	
     	
-
-    	// Split
+    	////////////////////////////////////////////////////////////////////////////////////////////////////
+    	// SPLITING
     	long startTimeS = System.currentTimeMillis();
     	
 		// Input hash into line blocks - Dictionary SPLIT Sx
@@ -183,16 +189,17 @@ public class Main {
 
         long endTimeS = System.currentTimeMillis();
         
+        
+        
         ///////////////////////////////////////
         // Lancement des jobs sur les slaves //
         ///////////////////////////////////////
 	
 
-		
-		
-    	// MAP & Dictionary UMx - machine  
+        ///////////////////////////////////////////////////////////////////////////////////////////
+    	// MAPPING
+        // Builds Dictionary UMx - machine  
         // Functionning like compute Sx -> UMx 
-		// args[0] == 'compute Sx -> UMx'
 		String args01 = "map";
 		
         Hashtable<String, String> UMmach = new Hashtable<String, String>();
@@ -224,18 +231,18 @@ public class Main {
 		}
 		
 	    
+		
 		// Listener of working machines
 		for (slaveManager slave : List_slaves){
 			
 			// We wait for all threads and when finished before timeout passed, then print job is finished
-			//synchronized (slave) {
-			
 		    slave.join(); // wait() possible
 		    		    
 		    // Get back keys from Slaves and build key - UMx Dictionary
 		    ArrayList<String> jobDone = slave.getSlaveAnswer();  
 		    
 			for (String res : jobDone){
+				if (res.contains("timeout in locking") || res.contains("zsh")) continue;
 				String mach = slave.getMachine();
 				String val1 = new String();
 				
@@ -275,23 +282,20 @@ public class Main {
 		
 		
 		
-		// Print that reducing has begun
-		System.out.println("\n++++++ Started launching shuffling and reducing threads computations++++++\n");
-		long startTimeSh = System.currentTimeMillis();
-		
-		// SHUFFLING MAP & Dictionary SMx - machine  	
-		// Functionning like compute Sx -> UMx 
-		// args[0] == 'compute Sx -> UMx'
+
+		/////////////////////////////////////////////////////////////////////////////////////////////////////
+		// SHUFFLING 
+		// Builds Dictionary SMx - machine  	
+		// Functioning like compute Sx -> UMx 
 		String args02 = "reduce";
 		
-
-		
+		// Print that shuffling/ reducing has begun
+		System.out.println("\n++++++ Started launching shuffling and reducing threads computations++++++\n");
+		long startTimeSh = System.currentTimeMillis();
 		
         Hashtable<String, String> RMmach = new Hashtable<String, String>();
         Hashtable<String, String> RMkey = new Hashtable<String, String>();
 
-        //Hashtable<String, ArrayList<String>> keyUMs = new Hashtable<String, ArrayList<String>>();
-        
     	// Launch jobs on machines among connection OK
 		String machineR = null;
 		int j = 0;
@@ -330,36 +334,53 @@ public class Main {
 		System.out.println("\nRMx - key tracker is:\n" + RMkey + "\n");
 		
 		long endTimeSh = System.currentTimeMillis();
+
 		
 		
-		long startTimeR = System.currentTimeMillis();
 		
 		// Listener for answers
+		long startTimeR = System.currentTimeMillis();
+		
 		Hashtable<String, Integer> RMcount = new Hashtable<String, Integer>();
+		ArrayList<String> errorBatch = new ArrayList<String>();
+		
 		for (slaveManager slave : List_slavesR){
 			
 			// We wait for all threads and when finished before timeout passed, then print job is finished
-			//synchronized (slave) {
+			//synchronized (slave) 
 			
 		    slave.join(); // wait() possible
 		    		    
+		    
 		    // Get back counts from Slaves and build RMx - count Dictionary
 		    ArrayList<String> jobDone = slave.getSlaveAnswer();  
-		    
+		    Set<String> RMmach_keys = RMmach.keySet(); 
+
 			for (String res : jobDone){
-				if (res == null) continue;
-				String mach = slave.getMachine();
-				String retrievedKey = new String();
-				Set<String> RMmach_keys = RMmach.keySet(); 
-				// Retrieve RM number then key
-				for (String rm : RMmach_keys){
-					if (RMmach.get(rm) == mach){
-						retrievedKey = RMkey.get(rm);
+				
+				// Test if res is Integer-like, else, slaveAnswer is an error and put machine in a error list
+				boolean ret = true;
+		        try {
+		        	Integer.parseInt(res);
+			        }catch (NumberFormatException e) {
+			            ret = false;
+		        }
+				if (res == null || ret == false || res.contains("timeout in locking") || res.contains("timed out") || res.contains("zsh")) 
+					errorBatch.add(slave.getMachine());
+
+				// If there is no error, then build the dictionary of word counts
+				else {
+					String mach = slave.getMachine();
+					String retrievedKey = new String();
+					// Retrieve RM number then key
+					for (String rm : RMmach_keys){
+						if (RMmach.get(rm) == mach){
+							retrievedKey = RMkey.get(rm);
 					}
 				}
-				
 				if (!RMcount.containsKey(res)){
 					RMcount.put(retrievedKey, Integer.parseInt(res));
+				}
 				}
 			}
 		}
@@ -371,27 +392,30 @@ public class Main {
 		
 		
 		
-		
+		/////////////////////////////////////////////////////////////////////////////////////////////
 		// Sort results by counts
-		//public static void sortValue(Hashtable<?, Integer> t) {
-			ArrayList<Map.Entry<?, Integer>> sortedCounts = new ArrayList<Entry<?, Integer>>(RMcount.entrySet());
-			Collections.sort(sortedCounts, new Comparator<Map.Entry<?, Integer>>(){
+        Set<Map.Entry<String, Integer>> set = RMcount.entrySet();
+        List<Map.Entry<String, Integer>> sortedList = new ArrayList<>(set);
+        
+        Collections.sort(sortedList, new Comparator<Entry<String, Integer>>() {
 
-        	public int compare(Map.Entry<?, Integer> o1, Map.Entry<?, Integer> o2) {
-        		return o1.getValue().compareTo(o2.getValue());
-        }});
+                @Override
+                public int compare(final Entry<String, Integer> o1, final Entry<String, Integer> o2) {
+                        return Integer.valueOf(o2.getValue()) - Integer.valueOf(o1.getValue());
+                }
 
-        System.out.println(sortedCounts);
-		//}
-		
-		
+        });
+        
+
+		///////////////////////////////////////////////////////////////////////////////////////////////
 		// Print result in a final file
-		try (PrintWriter outputTowardsResult = new PrintWriter(path + "Result.txt");){
-			outputTowardsResult.println(RMcount);
+		try (PrintWriter outputTowardsResult = new PrintWriter(path + Result);){
+			outputTowardsResult.println(sortedList);
+			outputTowardsResult.println("Errors on machines:\n" + errorBatch);
 		}
 		
-		// Print final dictionary word - count
-		System.out.println("Wordcount result is:\n" + RMcount);
+		// Print final list of word - count
+		System.out.println("Sorted wordcount result is:\n" + sortedList);
 
 		// SMx -> slave va lire les fichiers umx d'entrée et affiche ligne par ligne les occurences de ce mot dans SMx.txt
 		// RMx va lire SMx et compte occurence du mot et renvoie au master le nb final dans un ArrayList<String>
@@ -400,7 +424,7 @@ public class Main {
 		
 		// Timing 
 		System.out.println("\nTotal execution time Preprocessing: " + df0.format((endTimeP - startTimeP) / 1000) + " s " + df3.format((endTimeP - startTimeP) % 1000) + " ms");
-		System.out.println("Total execution time Filtering: " + df0.format((endTimeF - startTimeF) / 1000) + " s " + df3.format((endTimeF - startTimeF) % 1000) + " ms");
+		System.out.println("Total execution time Filtering/ Cleaning: " + df0.format((endTimeF - startTimeF) / 1000) + " s " + df3.format((endTimeF - startTimeF) % 1000) + " ms");
 		System.out.println("Total execution time Splitting: " + df0.format((endTimeS - startTimeS) / 1000) + " s " + df3.format((endTimeS - startTimeS) % 1000) + " ms");
 		System.out.println("Total execution time Mapping: " + df0.format((endTimeM - startTimeM) / 1000) + " s " + df3.format((endTimeM - startTimeM) % 1000) + " ms");
 		System.out.println("Total execution time Shuffling: " + df0.format((endTimeSh - startTimeSh) / 1000) + " s " + df3.format((endTimeSh - startTimeSh) % 1000) + " ms");
